@@ -1,0 +1,9 @@
+apiVersion: projectcontour.io/v1alpha1
+kind: ExtensionService
+metadata:
+  name: cloudflare-access
+spec:
+  protocol: h2c
+  services:
+    - name: cloudflare-ext-authz-service
+      port: 9090

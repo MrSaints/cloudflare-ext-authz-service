@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-ext-authz-service
+  labels:
+    app.kubernetes.io/name: cloudflare-ext-authz-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflare-ext-authz-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudflare-ext-authz-service
+    spec:
+      containers:
+        - name: api
+          image: cloudflare-ext-authz-service
+          envFrom:
+            - configMapRef:
+                name: cloudflare-ext-authz-service-config
+          ports:
+            - name: grpc
+              protocol: TCP
+              containerPort: 9090
+          readinessProbe:
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:9090"]
+            initialDelaySeconds: 5
+          livenessProbe:
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:9090"]
+            initialDelaySeconds: 10

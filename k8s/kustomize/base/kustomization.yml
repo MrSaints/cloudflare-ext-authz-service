@@ -1,0 +1,24 @@
+commonLabels:
+  app.kubernetes.io/part-of: cloudflare-ext-authz-service
+
+images:
+  - name: cloudflare-ext-authz-service
+    newName: "mrsaints/cloudflare-ext-authz-service"
+    newTag: "latest"
+
+replicas:
+  - name: cloudflare-ext-authz-service
+    count: 1
+
+configMapGenerator:
+  - name: cloudflare-ext-authz-service-config
+    # behavior: merge
+    literals:
+      - CFEAZ_SERVICE_ADDRESS=:9090
+      - CFEAZ_SERVICE_AUTH_DOMAIN=https://my-auth-domain.cloudflareaccess.com
+      - CFEAZ_SERVICE_ALLOWED_APPLICATION_AUDIENCES=change-me
+      # - CFEAZ_SERVICE_LOG_LEVEL=info
+
+resources:
+  - ./deployment.yml
+  - ./service.yml
