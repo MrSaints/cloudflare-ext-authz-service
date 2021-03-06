@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net"
 	"os"
 	"os/signal"
@@ -68,11 +69,14 @@ func main() {
 	healthService := &healthChecker{}
 	grpc_health_v1.RegisterHealthServer(server, healthService)
 
-	checker := &cloudflareAuthChecker{
-		logger:                      logger,
-		authDomain:                  c.AuthDomain,
-		allowedApplicationAudiences: c.AllowedApplicationAudiences,
-	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	checker := NewCloudflareAuthChecker(
+		ctx,
+		c.AuthDomain,
+		c.AllowedApplicationAudiences,
+		logger,
+	)
 
 	// DEPRECATED: included to support Contour <= v1.10.0
 	v2 := &authV2{

@@ -14,12 +14,29 @@ type checker interface {
 }
 
 type cloudflareAuthChecker struct {
-	logger *zap.Logger
+	verifier *oidc.IDTokenVerifier
+	logger   *zap.Logger
 
 	// The "Auth Domain" unique to your Cloudflare Access account.
 	authDomain string
 	// A list of allowed "Cloudflare Access - Application Audience (AUD)" tags.
 	allowedApplicationAudiences []string
+}
+
+func NewCloudflareAuthChecker(ctx context.Context, authDomain string, allowedApplicationAudiences []string, logger *zap.Logger) *cloudflareAuthChecker {
+	certsURL := fmt.Sprintf("%s/cdn-cgi/access/certs", authDomain)
+	config := &oidc.Config{
+		// We are checking it manually so that we can support multiple client IDs.
+		SkipClientIDCheck: true,
+	}
+	keySet := oidc.NewRemoteKeySet(ctx, certsURL)
+	verifier := oidc.NewVerifier(authDomain, keySet, config)
+	return &cloudflareAuthChecker{
+		verifier:                    verifier,
+		logger:                      logger,
+		authDomain:                  authDomain,
+		allowedApplicationAudiences: allowedApplicationAudiences,
+	}
 }
 
 // Based on https://developers.cloudflare.com/access/advanced-management/validating-json
@@ -53,14 +70,6 @@ func (c *cloudflareAuthChecker) Check(ctx context.Context, req *Request) (*Respo
 		}, nil
 	}
 
-	certsURL := fmt.Sprintf("%s/cdn-cgi/access/certs", c.authDomain)
-	config := &oidc.Config{
-		// We are checking it manually so that we can support multiple client IDs.
-		SkipClientIDCheck: true,
-	}
-	keySet := oidc.NewRemoteKeySet(ctx, certsURL)
-	verifier := oidc.NewVerifier(c.authDomain, keySet, config)
-
 	c.logger.Debug(
 		"Verifying token",
 		zap.String("authDomain", c.authDomain),
@@ -68,7 +77,7 @@ func (c *cloudflareAuthChecker) Check(ctx context.Context, req *Request) (*Respo
 		zap.Bool("hasAccessJWT", len(accessJWT) > 0),
 	)
 
-	idToken, err := verifier.Verify(ctx, accessJWT)
+	idToken, err := c.verifier.Verify(ctx, accessJWT)
 	if err != nil {
 		c.logger.Debug(
 			"Failed to verify token",
