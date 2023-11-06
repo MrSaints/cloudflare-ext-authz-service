@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine AS dev
+FROM golang:1.21-alpine AS dev
 
 LABEL org.label-schema.vcs-url="https://github.com/MrSaints/cloudflare-ext-authz-service" \
       maintainer="Ian L. <os@fyianlai.com>"
@@ -14,7 +14,6 @@ COPY go.mod go.sum /cloudflare-ext-authz-service/
 
 RUN go mod download
 
-
 FROM dev as build
 
 COPY ./ /cloudflare-ext-authz-service/
@@ -28,8 +27,7 @@ RUN CGO_ENABLED=0 \
     /cloudflare-ext-authz-service/ \
     && chmod +x /build/cloudflare-ext-authz-service
 
-
-FROM alpine:3.12 AS prod
+FROM alpine:3.18 AS prod
 
 LABEL org.label-schema.vcs-url="https://github.com/MrSaints/cloudflare-ext-authz-service" \
       maintainer="Ian L. <os@fyianlai.com>"
