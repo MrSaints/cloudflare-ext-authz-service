@@ -21,7 +21,7 @@ jobs:
         id: set_build_args
         shell: bash
         run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Build and Push
         id: docker_build
         uses: docker/build-push-action@v5
@@ -29,9 +29,9 @@ jobs:
           push: true
           tags: |
             mrsaints/cloudflare-ext-authz-service:latest
-            mrsaints/cloudflare-ext-authz-service:${{ steps.set_build_args.outputs.sha_short }}
+            mrsaints/cloudflare-ext-authz-service:${{ env.sha_short }}
           platforms: linux/amd64,linux/arm64,linux/arm/v6
           build-args: |
-            BUILD_VERSION=${{ steps.set_build_args.outputs.sha_short }}
+            BUILD_VERSION=${{ env.sha_short }}
       - name: Image Digest
         run: echo ${{ steps.docker_build.outputs.digest }}
