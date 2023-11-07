@@ -1,6 +1,9 @@
 # syntax=docker/dockerfile:1.2
 
 FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS dev
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 LABEL org.label-schema.vcs-url="https://github.com/MrSaints/cloudflare-ext-authz-service" \
       maintainer="Ian L. <os@fyianlai.com>"
@@ -17,12 +20,11 @@ COPY go.mod go.sum /cloudflare-ext-authz-service/
 RUN go mod download
 
 FROM --platform=$BUILDPLATFORM dev AS build
-
-COPY ./ /cloudflare-ext-authz-service/
-
 ARG TARGETPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
+
+COPY ./ /cloudflare-ext-authz-service/
 
 RUN mkdir /build/ && \
     CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -v \
@@ -32,6 +34,9 @@ RUN mkdir /build/ && \
     && chmod +x /build/cloudflare-ext-authz-service
 
 FROM --platform=$TARGETPLATFORM alpine:3.18 AS prod
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 LABEL org.label-schema.vcs-url="https://github.com/MrSaints/cloudflare-ext-authz-service" \
       maintainer="Ian L. <os@fyianlai.com>"
