@@ -45,12 +45,6 @@ RUN apk add --no-cache bash ca-certificates curl jq wget nano
 
 COPY --from=build /build/cloudflare-ext-authz-service /cloudflare-ext-authz-service/run
 
-ARG GRPC_HEALTH_PROBE_VERSION=v0.3.1
-RUN wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-${TARGETARCH} || \
-    { echo "Unsupported arch: ${TARGETARCH}" ; exit 1; }
-
-
-
 ARG BUILD_VERSION
 ENV CFEAZ_SERVICE_VERSION $BUILD_VERSION
 
